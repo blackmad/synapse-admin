@@ -1,7 +1,7 @@
 import { Identifier } from "ra-core";
 import { GetConfig } from "../utils/config";
 
-const mxidPattern = /^@[^@:]+:[^@:]+$/;
+const mxidPattern = /^@[^@:]+:[^@]+$/;
 
 /*
  * Check if id is a valid Matrix ID (user)
@@ -41,12 +41,11 @@ export function returnMXID(input: string | Identifier): string {
   const homeserver = localStorage.getItem("home_server");
 
   // Check if the input already looks like a valid MXID (i.e., starts with "@" and contains ":")
-  const mxidPattern = /^@[^@:]+:[^@:]+$/;
   if (isMXID(input)) {
     return input as string; // Already a valid MXID
   }
 
   // If input is not a valid MXID, assume it's a localpart and construct the MXID
-  const localpart = typeof input === 'string' && input.startsWith('@') ? input.slice(1) : input;
+  const localpart = typeof input === "string" && input.startsWith("@") ? input.slice(1) : input;
   return `@${localpart}:${homeserver}`;
 }

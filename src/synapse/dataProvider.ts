@@ -265,6 +265,12 @@ export interface UsernameAvailabilityResult {
   errcode?: string;
 }
 
+interface MembershipEvent {
+  event_id: string;
+  membership: string;
+  room_id: string;
+}
+
 export interface SynapseDataProvider extends DataProvider {
   deleteMedia: (params: DeleteMediaParams) => Promise<DeleteMediaResult>;
   uploadMedia: (params: UploadMediaParams) => Promise<UploadMediaResult>;
@@ -387,6 +393,17 @@ const resourceMap = {
       endpoint: `/_synapse/admin/v1/users/${encodeURIComponent(id)}/joined_rooms`,
     }),
     data: "joined_rooms",
+    total: json => json.total,
+  },
+  membership_events: {
+    map: (mr: MembershipEvent) => ({
+      ...mr,
+      id: mr.event_id,
+    }),
+    reference: (id: Identifier) => ({
+      endpoint: `/_synapse/admin/v1/users/${encodeURIComponent(id)}/membership_events`,
+    }),
+    data: "membership_events",
     total: json => json.total,
   },
   users_media: {
@@ -604,21 +621,23 @@ const baseDataProvider: SynapseDataProvider = {
     const res = resourceMap[resource];
 
     const endpoint_url = base_url + res.path;
-    const responses = await Promise.all(params.ids.map(id => {
-      // edge case: when user is external / federated, homeserver will return error, as querying external users via
-      // /_synapse/admin/v2/users is not allowed.
-      // That leads to an issue when a user is referenced (e.g., in room state datagrid) - the user cell is just empty.
-      // To avoid that, we fake the response with one specific field (name) which is used in the datagrid.
-      if (homeserver && resource === "users") {
-        if (!(<string>id).endsWith(homeserver)) {
-          const json = {
+    const responses = await Promise.all(
+      params.ids.map(id => {
+        // edge case: when user is external / federated, homeserver will return error, as querying external users via
+        // /_synapse/admin/v2/users is not allowed.
+        // That leads to an issue when a user is referenced (e.g., in room state datagrid) - the user cell is just empty.
+        // To avoid that, we fake the response with one specific field (name) which is used in the datagrid.
+        if (homeserver && resource === "users") {
+          if (!(<string>id).endsWith(homeserver)) {
+            const json = {
               name: id,
-          };
-          return Promise.resolve({ json });
+            };
+            return Promise.resolve({ json });
+          }
         }
-      }
-      return jsonClient(`${endpoint_url}/${encodeURIComponent(id)}`);
-    }));
+        return jsonClient(`${endpoint_url}/${encodeURIComponent(id)}`);
+      })
+    );
     return {
       data: responses.map(({ json }) => res.map(json)),
       total: responses.length,
@@ -838,9 +857,9 @@ const baseDataProvider: SynapseDataProvider = {
     return json as RateLimitsModel;
   },
   setRateLimits: async (id: Identifier, rateLimits: RateLimitsModel) => {
-    const filtered = Object.entries(rateLimits).
-      filter(([key, value]) => value !== null && value !== undefined).
-      reduce((obj, [key, value]) => {
+    const filtered = Object.entries(rateLimits)
+      .filter(([key, value]) => value !== null && value !== undefined)
+      .reduce((obj, [key, value]) => {
         obj[key] = value;
         return obj;
       }, {});
@@ -849,7 +868,7 @@ const baseDataProvider: SynapseDataProvider = {
     const endpoint_url = `${base_url}/_synapse/admin/v1/users/${encodeURIComponent(returnMXID(id))}/override_ratelimit`;
     if (Object.keys(filtered).length === 0) {
       await jsonClient(endpoint_url, { method: "DELETE" });
-      return
+      return;
     }
 
     await jsonClient(endpoint_url, { method: "POST", body: JSON.stringify(filtered) });
@@ -880,7 +899,7 @@ const baseDataProvider: SynapseDataProvider = {
       }
       throw error;
     }
-  }
+  },
 };
 
 const dataProvider = withLifecycleCallbacks(baseDataProvider, [

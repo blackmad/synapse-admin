@@ -8,7 +8,7 @@ import PermMediaIcon from "@mui/icons-material/PermMedia";
 import PersonPinIcon from "@mui/icons-material/PersonPin";
 import SettingsInputComponentIcon from "@mui/icons-material/SettingsInputComponent";
 import ScienceIcon from "@mui/icons-material/Science";
-import LockClockIcon from '@mui/icons-material/LockClock';
+import LockClockIcon from "@mui/icons-material/LockClock";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import { useEffect, useState } from "react";
 import { Alert, Typography } from "@mui/material";
@@ -113,7 +113,11 @@ const userFilters = [
   <BooleanInput label="resources.users.fields.show_locked" source="locked" alwaysOn />,
 ];
 
-const UserPreventSelfDelete: React.FC<{ children: React.ReactNode; ownUserIsSelected: boolean; asManagedUserIsSelected: boolean }> = props => {
+const UserPreventSelfDelete: React.FC<{
+  children: React.ReactNode;
+  ownUserIsSelected: boolean;
+  asManagedUserIsSelected: boolean;
+}> = props => {
   const ownUserIsSelected = props.ownUserIsSelected;
   const asManagedUserIsSelected = props.asManagedUserIsSelected;
   const notify = useNotify();
@@ -171,7 +175,12 @@ export const UserList = (props: ListProps) => (
       rowClick={(id: Identifier, resource: string) => `/${resource}/${id}`}
       bulkActionButtons={<UserBulkActionButtons />}
     >
-      <AvatarField source="avatar_src" sx={{ height: "40px", width: "40px" }} sortBy="avatar_url" label="resources.users.fields.avatar" />
+      <AvatarField
+        source="avatar_src"
+        sx={{ height: "40px", width: "40px" }}
+        sortBy="avatar_url"
+        label="resources.users.fields.avatar"
+      />
       <TextField source="id" sortBy="name" label="resources.users.fields.id" />
       <TextField source="displayname" label="resources.users.fields.displayname" />
       <BooleanField source="is_guest" label="resources.users.fields.is_guest" />
@@ -207,13 +216,13 @@ const UserEditActions = () => {
     <TopToolbar>
       {!record?.deactivated && <ServerNoticeButton />}
       {record && record.id && (
-      <UserPreventSelfDelete ownUserIsSelected={ownUserIsSelected} asManagedUserIsSelected={asManagedUserIsSelected}>
-        <DeleteUserButton
-          selectedIds={[record?.id]}
-          confirmTitle="resources.users.helper.erase"
-          confirmContent="resources.users.helper.erase_text"
-        />
-      </UserPreventSelfDelete>
+        <UserPreventSelfDelete ownUserIsSelected={ownUserIsSelected} asManagedUserIsSelected={asManagedUserIsSelected}>
+          <DeleteUserButton
+            selectedIds={[record?.id]}
+            confirmTitle="resources.users.helper.erase"
+            confirmContent="resources.users.helper.erase_text"
+          />
+        </UserPreventSelfDelete>
       )}
     </TopToolbar>
   );
@@ -228,18 +237,28 @@ export const UserCreate = (props: CreateProps) => {
 
   const [open, setOpen] = useState(false);
   const [userIsAvailable, setUserIsAvailable] = useState<boolean | undefined>();
-  const [userAvailabilityEl, setUserAvailabilityEl] = useState<React.ReactElement | false>(<Typography component="span"></Typography>);
+  const [userAvailabilityEl, setUserAvailabilityEl] = useState<React.ReactElement | false>(
+    <Typography component="span"></Typography>
+  );
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [create] = useCreate();
 
-  const checkAvailability = async(event: React.FocusEvent<HTMLInputElement>) => {
+  const checkAvailability = async (event: React.FocusEvent<HTMLInputElement>) => {
     const username = event.target.value;
     const result: UsernameAvailabilityResult = await dataProvider.checkUsernameAvailability(username);
     setUserIsAvailable(!!result?.available);
     if (result?.available) {
-      setUserAvailabilityEl(<Typography component="span" variant="body2" sx={{ color: theme.palette.success.main }}>✔️ {translate("resources.users.helper.username_available")}</Typography>);
+      setUserAvailabilityEl(
+        <Typography component="span" variant="body2" sx={{ color: theme.palette.success.main }}>
+          ✔️ {translate("resources.users.helper.username_available")}
+        </Typography>
+      );
     } else {
-      setUserAvailabilityEl(<Typography component="span" variant="body2" sx={{ color:  theme.palette.warning.main }}>⚠️ {result?.error || "unknown error"}</Typography>);
+      setUserAvailabilityEl(
+        <Typography component="span" variant="body2" sx={{ color: theme.palette.warning.main }}>
+          ⚠️ {result?.error || "unknown error"}
+        </Typography>
+      );
     }
   };
 
@@ -250,12 +269,18 @@ export const UserCreate = (props: CreateProps) => {
       return;
     }
 
-    create("users", { data: data }, {
-      onSuccess: (resource: User) => {
-        notify("ra.notification.created", { messageArgs: { smart_count: 1 } });
-        redirect(() => { return `users/${resource.id}` });
+    create(
+      "users",
+      { data: data },
+      {
+        onSuccess: (resource: User) => {
+          notify("ra.notification.created", { messageArgs: { smart_count: 1 } });
+          redirect(() => {
+            return `users/${resource.id}`;
+          });
+        },
       }
-    });
+    );
   };
 
   const handleConfirm = () => {
@@ -268,39 +293,48 @@ export const UserCreate = (props: CreateProps) => {
   };
 
   const updateUser = () => {
-    create("users", { data: formData }, {
-      onSuccess: (resource: User) => {
-        notify("ra.notification.updated", { messageArgs: { smart_count: 1 } });
-        redirect(() => { return `users/${resource.id}` });
+    create(
+      "users",
+      { data: formData },
+      {
+        onSuccess: (resource: User) => {
+          notify("ra.notification.updated", { messageArgs: { smart_count: 1 } });
+          redirect(() => {
+            return `users/${resource.id}`;
+          });
+        },
       }
-    });
-  }
+    );
+  };
 
-  return <Create
-    {...props}
-  >
-    <SimpleForm
-      onSubmit={postSave}
-    >
-      <TextInput source="id" autoComplete="off" validate={validateUser} onBlur={checkAvailability} helperText={userAvailabilityEl}/>
-      <TextInput source="displayname" validate={maxLength(256)} />
-      <UserPasswordInput source="password" autoComplete="new-password" helperText="resources.users.helper.password" />
-      <SelectInput source="user_type" choices={choices_type} translateChoice={false} resettable />
-      <BooleanInput source="admin" />
-      <ArrayInput source="threepids">
-        <SimpleFormIterator disableReordering>
-          <SelectInput source="medium" choices={choices_medium} validate={required()} />
-          <TextInput source="address" validate={validateAddress} />
-        </SimpleFormIterator>
-      </ArrayInput>
-      <ArrayInput source="external_ids" label="synapseadmin.users.tabs.sso">
-        <SimpleFormIterator disableReordering>
-          <TextInput source="auth_provider" validate={required()} />
-          <TextInput source="external_id" label="resources.users.fields.id" validate={required()} />
-        </SimpleFormIterator>
-      </ArrayInput>
-    </SimpleForm>
-    <Confirm
+  return (
+    <Create {...props}>
+      <SimpleForm onSubmit={postSave}>
+        <TextInput
+          source="id"
+          autoComplete="off"
+          validate={validateUser}
+          onBlur={checkAvailability}
+          helperText={userAvailabilityEl}
+        />
+        <TextInput source="displayname" validate={maxLength(256)} />
+        <UserPasswordInput source="password" autoComplete="new-password" helperText="resources.users.helper.password" />
+        <SelectInput source="user_type" choices={choices_type} translateChoice={false} resettable />
+        <BooleanInput source="admin" />
+        <ArrayInput source="threepids">
+          <SimpleFormIterator disableReordering>
+            <SelectInput source="medium" choices={choices_medium} validate={required()} />
+            <TextInput source="address" validate={validateAddress} />
+          </SimpleFormIterator>
+        </ArrayInput>
+        <ArrayInput source="external_ids" label="synapseadmin.users.tabs.sso">
+          <SimpleFormIterator disableReordering>
+            <TextInput source="auth_provider" validate={required()} />
+            <TextInput source="external_id" label="resources.users.fields.id" validate={required()} />
+          </SimpleFormIterator>
+        </ArrayInput>
+      </SimpleForm>
+      <Confirm
         isOpen={open}
         title="resources.users.action.overwrite_title"
         content="resources.users.action.overwrite_content"
@@ -309,7 +343,8 @@ export const UserCreate = (props: CreateProps) => {
         confirm="resources.users.action.overwrite_confirm"
         cancel="resources.users.action.overwrite_cancel"
       />
-  </Create>
+    </Create>
+  );
 };
 
 const UserTitle = () => {
@@ -319,7 +354,7 @@ const UserTitle = () => {
     return null;
   }
 
-  let username = record ? (record.displayname ? `"${record.displayname}"` : `"${record.name}"`) : ""
+  let username = record ? (record.displayname ? `"${record.displayname}"` : `"${record.name}"`) : "";
   return (
     <span>
       {translate("resources.users.name", {
@@ -345,7 +380,10 @@ const UserEditToolbar = () => {
       <div className={ToolbarClasses.defaultToolbar}>
         <Toolbar sx={{ justifyContent: "space-between" }}>
           <SaveButton />
-          <UserPreventSelfDelete ownUserIsSelected={ownUserIsSelected} asManagedUserIsSelected={asManagedUserIsSelected}>
+          <UserPreventSelfDelete
+            ownUserIsSelected={ownUserIsSelected}
+            asManagedUserIsSelected={asManagedUserIsSelected}
+          >
             <DeleteButton />
           </UserPreventSelfDelete>
         </Toolbar>
@@ -388,8 +426,18 @@ const UserPasswordInput = props => {
 
   return (
     <>
-      <PasswordInput {...props} helperText={asManagedUserIsSelected ? "resources.users.helper.modify_managed_user_error" : (record ? "resources.users.helper.password" : "resources.users.helper.create_password")} disabled={asManagedUserIsSelected} />
-       <Button
+      <PasswordInput
+        {...props}
+        helperText={
+          asManagedUserIsSelected
+            ? "resources.users.helper.modify_managed_user_error"
+            : record
+              ? "resources.users.helper.password"
+              : "resources.users.helper.create_password"
+        }
+        disabled={asManagedUserIsSelected}
+      />
+      <Button
         variant="outlined"
         label="resources.users.action.generate_password"
         onClick={generatePassword}
@@ -404,11 +452,17 @@ export const UserEdit = (props: EditProps) => {
   const translate = useTranslate();
 
   return (
-    <Edit {...props} title={<UserTitle />} actions={<UserEditActions />} mutationMode="pessimistic" queryOptions={{
-      meta: {
-        include: ["features"] // Tell your dataProvider to include features
-      }
-    }}>
+    <Edit
+      {...props}
+      title={<UserTitle />}
+      actions={<UserEditActions />}
+      mutationMode="pessimistic"
+      queryOptions={{
+        meta: {
+          include: ["features"], // Tell your dataProvider to include features
+        },
+      }}
+    >
       <TabbedForm toolbar={<UserEditToolbar />}>
         <FormTab label={translate("resources.users.name", { smart_count: 1 })} icon={<PersonPinIcon />}>
           <AvatarField source="avatar_src" sx={{ height: "120px", width: "120px" }} />
@@ -418,16 +472,26 @@ export const UserEdit = (props: EditProps) => {
             label="resources.users.fields.avatar"
             accept={{ "image/*": [".png", ".jpg"] }}
           >
-            <ImageField source="src" title="Avatar" sx={{ '& img': {
-              width: "120px !important",
-              height: "120px !important",
-              objectFit: "cover !important",
-              borderRadius: '50% !important',
-            }}} />
+            <ImageField
+              source="src"
+              title="Avatar"
+              sx={{
+                "& img": {
+                  width: "120px !important",
+                  height: "120px !important",
+                  objectFit: "cover !important",
+                  borderRadius: "50% !important",
+                },
+              }}
+            />
           </ImageInput>
           <TextInput source="id" readOnly />
           <TextInput source="displayname" />
-          <UserPasswordInput source="password" autoComplete="new-password" helperText="resources.users.helper.password" />
+          <UserPasswordInput
+            source="password"
+            autoComplete="new-password"
+            helperText="resources.users.helper.password"
+          />
           <SelectInput source="user_type" choices={choices_type} translateChoice={false} resettable />
           <BooleanInput source="admin" />
           <UserBooleanInput source="locked" />
@@ -509,19 +573,67 @@ export const UserEdit = (props: EditProps) => {
 
         <FormTab label={translate("resources.rooms.name", { smart_count: 2 })} icon={<ViewListIcon />} path="rooms">
           <ReferenceManyField reference="joined_rooms" target="user_id" label={false}>
-              <Datagrid sx={{ width: "100%" }} rowClick={id => "/rooms/" + id + "/show"} bulkActionButtons={false}>
-                <ReferenceField reference="rooms" source="id" label={false} link={false} sortable={false}>
-                  <AvatarField source="avatar" sx={{ height: "40px", width: "40px" }} />
-                </ReferenceField>
-                  <TextField source="id" label="resources.rooms.fields.room_id" sortable={false}/>
-                <ReferenceField reference="rooms" source="id" label="resources.rooms.fields.name" link={false} sortable={false}>
-                  <TextField source="name" />
-                </ReferenceField>
-                <ReferenceField reference="rooms" source="id" label="resources.rooms.fields.joined_members" link={false} sortable={false}>
-                  <TextField source="joined_members" sortable={false} />
-                </ReferenceField>
-                  <MakeAdminBtn />
-              </Datagrid>
+            <Datagrid sx={{ width: "100%" }} rowClick={id => "/rooms/" + id + "/show"} bulkActionButtons={false}>
+              <ReferenceField reference="rooms" source="id" label={false} link={false} sortable={false}>
+                <AvatarField source="avatar" sx={{ height: "40px", width: "40px" }} />
+              </ReferenceField>
+              <TextField source="id" label="resources.rooms.fields.room_id" sortable={false} />
+              <ReferenceField
+                reference="rooms"
+                source="id"
+                label="resources.rooms.fields.name"
+                link={false}
+                sortable={false}
+              >
+                <TextField source="name" />
+              </ReferenceField>
+              <ReferenceField
+                reference="rooms"
+                source="id"
+                label="resources.rooms.fields.joined_members"
+                link={false}
+                sortable={false}
+              >
+                <TextField source="joined_members" sortable={false} />
+              </ReferenceField>
+              <MakeAdminBtn />
+            </Datagrid>
+          </ReferenceManyField>
+        </FormTab>
+
+        <FormTab
+          label={translate("resources.membership_events.name", { smart_count: 2 })}
+          icon={<ViewListIcon />}
+          path="membership_events"
+        >
+          <ReferenceManyField reference="membership_events" target="user_id" label={false}>
+            <Datagrid sx={{ width: "100%" }} rowClick={id => "/rooms/" + id + "/show"} bulkActionButtons={false}>
+              <TextField source="event_id" />
+              <TextField source="membership" />
+              <ReferenceField reference="rooms" source="room_id" label={false} link={false} sortable={false}>
+                <AvatarField source="avatar" sx={{ height: "40px", width: "40px" }} />
+              </ReferenceField>
+              <TextField source="room_id" label="resources.rooms.fields.room_id" sortable={false} />
+              <ReferenceField
+                reference="rooms"
+                source="room_id"
+                label="resources.rooms.fields.name"
+                link={false}
+                sortable={false}
+              >
+                <TextField source="name" />
+              </ReferenceField>
+              <ReferenceField
+                reference="rooms"
+                source="room_id"
+                label="resources.rooms.fields.joined_members"
+                link={false}
+                sortable={false}
+              >
+                <TextField source="joined_members" sortable={false} />
+              </ReferenceField>
+              <MakeAdminBtn />
+            </Datagrid>
           </ReferenceManyField>
         </FormTab>
 

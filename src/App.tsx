@@ -77,6 +77,7 @@ export const App = () => (
       <Resource name="room_members" />
       <Resource name="users_media" />
       <Resource name="joined_rooms" />
+      <Resource name="membership_events" />
       <Resource name="pushers" />
       <Resource name="servernotices" />
       <Resource name="forward_extremities" />
